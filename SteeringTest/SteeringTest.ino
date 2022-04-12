@@ -7,13 +7,16 @@
 //Stepper output info
 #define PUL 6
 #define DIR 8
-#define pulseWidth 20  // microseconds
-#define stepsPerRotation 200
+#define pulseWidth 50  // microseconds
+#define stepsPerRotation 800
 #define rangeOfRotation 1
+#define gearRatio 15.3
 
 PPMReader ppm(PPMpin, channelAmount);
-float maxCCW = 15.3 * stepsPerRotation * rangeOfRotation / 2;
-float maxCW = -15.3 * stepsPerRotation * rangeOfRotation / 2;
+int maxCCW =  gearRatio * stepsPerRotation * rangeOfRotation / 2;
+int maxCW = - gearRatio * stepsPerRotation * rangeOfRotation / 2;
+int i;
+unsigned ch7;
 
 void setup() {
   pinMode(PUL, OUTPUT);
@@ -33,78 +36,69 @@ void PULSE(int Step_Hz, int dir) {
 }
 //*/
 
-void ROTATE() {
+int ROTATE(int i) {
   unsigned ch3 = ppm.rawChannelValue(3); //Left Throttle joystick
   unsigned ch5 = ppm.rawChannelValue(5); //right 3 pole switch
 
   int Step_Hz = map(ch3, 1000, 2000, 25, 5000);
-  int dir;
   if (ch5 > 1750) { //if 3 pole switch is down
-    dir = 1;
-    PULSE(Step_Hz, dir);
+    PULSE(Step_Hz, 1);
+    i += 1;
 
   } else if (ch5 < 1250) { //if 3 pole switch is up
-    dir = 0;
-    PULSE(Step_Hz, dir);
+    PULSE(Step_Hz, 0);
+    i -= 1;
 
   } else { ////if 3 pole switch is in the middle
 
   }
+  return i;
 }
-/*
-void posControl() {
-    float i = 0;
-    unsigned ch4;
-    float targetPos;
-    float e;
-    ch4 = ppm.rawChannelValue(4); //Left yaw joystick
-    targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
-    e = targetPos - i;
-    if (e > 0) {
-      PULSE(1000, 1);
-      i += 1;
-    }
-    if (e < 0) {
-      PULSE(1000, 0);
-      i -= 1;
-    }
-  }//*/
-  void loop() {
-    unsigned ch7 = ppm.rawChannelValue(7); //Left 2 pole switch
-    while (ch7 < 1250) { // if the 2 pole switch is down, rotate constantly
-      ch7 = ppm.rawChannelValue(7); //update ch7
-      ROTATE();
-    }
-    if (ch7 > 1750) {
-      float i = 0;
-      unsigned ch4;
-      float targetPos;
-      float e;
-      while (ch7 > 1750) { // if the 2 pole switch is up, go to position
-        ch7 = ppm.rawChannelValue(7); //update ch7
-        ch4 = ppm.rawChannelValue(4); //Left yaw joystick
-        targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
-        e = targetPos - i;
-        if (e > 0) {
-          PULSE(1000, 1);
-          i += 1;
-        }
-        if (e < 0) {
-          PULSE(1000, 0);
-          i -= 1;
-        }
-        /*
-          Serial.print(targetPos);
-          Serial.print('\t');
-          Serial.println(i);
-          Serial.print('\t');
-          Serial.print(e);//*/
-      }
-    }
-    if ( ch7 > 1250 && ch7 < 1750) {
-      digitalWrite(13, HIGH);
-      delay(200);
-      digitalWrite(13, LOW);
-      delay(200);
-    }
+//*
+int posCONTROL(int i) {
+  unsigned ch4;
+  float targetPos;
+  float e;
+  ch4 = ppm.rawChannelValue(4); //Left yaw joystick
+  targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
+  e = targetPos - i;
+
+  //while (abs(e) > 0) {
+  //e = targetPos - i;
+  if (e > 0) {
+    PULSE(1000, 1);
+    i += 1;
   }
+  if (e < 0) {
+    PULSE(1000, 0);
+    i -= 1;
+    //}
+  }
+  return i;
+
+}//*/
+void loop() {
+  ch7 = ppm.rawChannelValue(7); //Left 2 pole switch
+//  i = i % (gearRatio * stepsPerRotation * rangeOfRotation / 2);
+  while (ch7 < 1250) { // if the 2 pole switch is down, rotate constantly
+    ch7 = ppm.rawChannelValue(7); //update ch7
+    i = ROTATE(i);
+    //Serial.println(i);
+
+  }
+
+  while (ch7 > 1750) { // if the 2 pole switch is up, control position
+    ch7 = ppm.rawChannelValue(7); //update ch7
+    i = posCONTROL(i);
+   // Serial.println(i);
+
+  }
+
+  if ( ch7 > 1250 && ch7 < 1750) { // if invalid signal is detected, only flash led
+    digitalWrite(13, HIGH);
+    delay(200);
+    digitalWrite(13, LOW);
+    delay(200);
+   // Serial.println(i);
+  }
+}
