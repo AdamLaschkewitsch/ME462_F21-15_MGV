@@ -8,12 +8,17 @@
 #define PUL 6
 #define DIR 8
 #define pulseWidth 20  // microseconds
+#define stepsPerRotation 200
+#define rangeOfRotation 1
 
 PPMReader ppm(PPMpin, channelAmount);
+float maxCCW = 15.3 * stepsPerRotation * rangeOfRotation / 2;
+float maxCW = -15.3 * stepsPerRotation * rangeOfRotation / 2;
 
 void setup() {
   pinMode(PUL, OUTPUT);
   pinMode(DIR, OUTPUT);
+  pinMode(13, OUTPUT);
   Serial.begin(115200);
 }
 //*
@@ -46,34 +51,60 @@ void ROTATE() {
 
   }
 }
-void loop() {
-  unsigned ch7 = ppm.rawChannelValue(7); //Left 2 pole switch
-  while (ch7 < 1250) { // if the 2 pole switch is down, rotate constantly
-    ROTATE();
-  }
-  if (ch7 > 1750) {
+/*
+void posControl() {
     float i = 0;
     unsigned ch4;
     float targetPos;
     float e;
-    while (ch7 > 1750) { // if the 2 pole switch is up, go to position
-      ch4 = ppm.rawChannelValue(4); //Left yaw joystick
-      targetPos = map(ch4, 1000, 2000, -100, 100);
-      e = i - targetPos;
-      if (e > 0) {
-        PULSE(1000, 1);
-        i += 1;
-      }
-      if (e < 0) {
-        PULSE(1000, 0);
-        i -= 1;
+    ch4 = ppm.rawChannelValue(4); //Left yaw joystick
+    targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
+    e = targetPos - i;
+    if (e > 0) {
+      PULSE(1000, 1);
+      i += 1;
+    }
+    if (e < 0) {
+      PULSE(1000, 0);
+      i -= 1;
+    }
+  }//*/
+  void loop() {
+    unsigned ch7 = ppm.rawChannelValue(7); //Left 2 pole switch
+    while (ch7 < 1250) { // if the 2 pole switch is down, rotate constantly
+      ch7 = ppm.rawChannelValue(7); //update ch7
+      ROTATE();
+    }
+    if (ch7 > 1750) {
+      float i = 0;
+      unsigned ch4;
+      float targetPos;
+      float e;
+      while (ch7 > 1750) { // if the 2 pole switch is up, go to position
+        ch7 = ppm.rawChannelValue(7); //update ch7
+        ch4 = ppm.rawChannelValue(4); //Left yaw joystick
+        targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
+        e = targetPos - i;
+        if (e > 0) {
+          PULSE(1000, 1);
+          i += 1;
+        }
+        if (e < 0) {
+          PULSE(1000, 0);
+          i -= 1;
+        }
+        /*
+          Serial.print(targetPos);
+          Serial.print('\t');
+          Serial.println(i);
+          Serial.print('\t');
+          Serial.print(e);//*/
       }
     }
+    if ( ch7 > 1250 && ch7 < 1750) {
+      digitalWrite(13, HIGH);
+      delay(200);
+      digitalWrite(13, LOW);
+      delay(200);
+    }
   }
-  if ( ch7 > 1250 && ch7 < 1750) {
-    digitalWrite(13, HIGH);
-    delay(200);
-    digitalWrite(13, LOW);
-    delay(200);
-  }
-}
