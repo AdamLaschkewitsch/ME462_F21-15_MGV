@@ -7,16 +7,105 @@
 //Stepper output info
 #define PUL 6
 #define DIR 8
-#define pulseWidth 50  // microseconds
-#define stepsPerRotation 800
-#define rangeOfRotation 1
+#define pulseWidth 20  // microseconds
+#define stepsPerRev 200
+#define rangeOfRev 1
 #define gearRatio 15.3
+#define maxGearboxRPM 25
+
+//---------------------------
+//---------------------------
 
 PPMReader ppm(PPMpin, channelAmount);
-int maxCCW =  gearRatio * stepsPerRotation * rangeOfRotation / 2;
-int maxCW = - gearRatio * stepsPerRotation * rangeOfRotation / 2;
-int i;
+int maxCCW =  gearRatio * stepsPerRev * rangeOfRev / 2;
+int maxCW = - gearRatio * stepsPerRev * rangeOfRev / 2;
+int currentPos;
 unsigned ch7;
+int maxPulseFreq = stepsPerRev * 10;
+
+//---------------------------
+//---------------------------
+
+//*
+float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
+}
+
+//---------------------------
+
+void PULSE(float RPM, int dir) {
+
+  float stepFreq = RPM / 60 * stepsPerRev * gearRatio;
+
+  float cycleWidth = (1.0 / stepFreq) * 1000000;
+  digitalWrite(DIR, dir);
+  digitalWrite(PUL, HIGH);
+  delayMicroseconds(pulseWidth);
+  digitalWrite(PUL, LOW);
+  delayMicroseconds(cycleWidth - pulseWidth);
+
+}
+//*/
+//---------------------------
+
+int ROTATE(int currentPos) {
+  unsigned ch3 = ppm.rawChannelValue(3); //Left Throttle joystick
+  unsigned ch5 = ppm.rawChannelValue(5); //right 3 pole switch
+
+  float RPM = mapfloat(ch3, 1000, 2000, 0, maxGearboxRPM); // min and max gearbox rpm
+  if (RPM > 0) {
+    if (ch5 > 1750) { //if 3 pole switch is down
+      PULSE(RPM, 1);
+      currentPos += 1;
+
+    } else if (ch5 < 1250) { //if 3 pole switch is up
+      PULSE(RPM, 0);
+      currentPos -= 1;
+
+    } else { ////if 3 pole switch is in the middle
+
+    }
+    return currentPos;
+  }
+  else {
+  }
+}
+//*
+
+//---------------------------
+
+int posCONTROL(int Position) {
+  int max_e = 50;
+  unsigned ch4;
+  float targetPos;
+  float e;
+  int i;
+  ch4 = ppm.rawChannelValue(4); //Left yaw joystick
+  targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
+  e = targetPos - currentPos;
+  //Serial.println(e);
+  if (abs(e) > max_e) {
+    i = max_e / 2;
+    while (i > 0) {
+      if (e > max_e) {
+        PULSE(maxGearboxRPM, 1);
+        currentPos += 1;
+      }
+
+      if (e < -max_e) {
+        PULSE(maxGearboxRPM, 0);
+        currentPos -= 1;
+      }
+      i-=1;
+    }
+    
+    return currentPos;
+
+  }
+}//*/
+//---------------------------
+//---------------------------
 
 void setup() {
   pinMode(PUL, OUTPUT);
@@ -24,73 +113,21 @@ void setup() {
   pinMode(13, OUTPUT);
   Serial.begin(115200);
 }
-//*
-void PULSE(int Step_Hz, int dir) {
-  float cycleWidth = (1.0 / Step_Hz) * 1000000;
-
-  digitalWrite(DIR, dir);
-  digitalWrite(PUL, HIGH);
-  delayMicroseconds(pulseWidth);
-  digitalWrite(PUL, LOW);
-  delayMicroseconds(cycleWidth - pulseWidth);
-}
-//*/
-
-int ROTATE(int i) {
-  unsigned ch3 = ppm.rawChannelValue(3); //Left Throttle joystick
-  unsigned ch5 = ppm.rawChannelValue(5); //right 3 pole switch
-
-  int Step_Hz = map(ch3, 1000, 2000, 25, 5000);
-  if (ch5 > 1750) { //if 3 pole switch is down
-    PULSE(Step_Hz, 1);
-    i += 1;
-
-  } else if (ch5 < 1250) { //if 3 pole switch is up
-    PULSE(Step_Hz, 0);
-    i -= 1;
-
-  } else { ////if 3 pole switch is in the middle
-
-  }
-  return i;
-}
-//*
-int posCONTROL(int i) {
-  unsigned ch4;
-  float targetPos;
-  float e;
-  ch4 = ppm.rawChannelValue(4); //Left yaw joystick
-  targetPos = map(ch4, 1000, 2000, maxCW, maxCCW);
-  e = targetPos - i;
-
-  //while (abs(e) > 0) {
-  //e = targetPos - i;
-  if (e > 0) {
-    PULSE(1000, 1);
-    i += 1;
-  }
-  if (e < 0) {
-    PULSE(1000, 0);
-    i -= 1;
-    //}
-  }
-  return i;
-
-}//*/
 void loop() {
   ch7 = ppm.rawChannelValue(7); //Left 2 pole switch
-//  i = i % (gearRatio * stepsPerRotation * rangeOfRotation / 2);
+  //Serial.println(ch7);
+  //  currentPos = currentPos % (gearRatio * stepsPerRotation * rangeOfRotation / 2);
   while (ch7 < 1250) { // if the 2 pole switch is down, rotate constantly
     ch7 = ppm.rawChannelValue(7); //update ch7
-    i = ROTATE(i);
+    currentPos = ROTATE(currentPos);
     //Serial.println(i);
 
   }
 
   while (ch7 > 1750) { // if the 2 pole switch is up, control position
     ch7 = ppm.rawChannelValue(7); //update ch7
-    i = posCONTROL(i);
-   // Serial.println(i);
+    currentPos = posCONTROL(currentPos);
+    // Serial.println(i);
 
   }
 
@@ -99,6 +136,6 @@ void loop() {
     delay(200);
     digitalWrite(13, LOW);
     delay(200);
-   // Serial.println(i);
+    // Serial.println(i);
   }
 }
