@@ -112,6 +112,7 @@ void setup() {
   pinMode(DIR, OUTPUT);
   pinMode(13, OUTPUT);
   Serial.begin(115200);
+  currentPos=0;
 }
 void loop() {
   ch7 = ppm.rawChannelValue(7); //Left 2 pole switch
