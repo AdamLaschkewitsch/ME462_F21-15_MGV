@@ -40,7 +40,7 @@ void setup() {
   pinMode(POT, INPUT);
   pinMode(PUL, OUTPUT);
   pinMode(DIR, OUTPUT);
-  Serial.begin(115200);
+  //Serial.begin(115200);
   int currretPos = 0;
 }
 
@@ -62,6 +62,7 @@ void loop() {
         currentPos -= 1;
       }
       i -= 1;
+      /*
       Serial.print(maxCW);
       Serial.print('\t');
       Serial.print(maxCCW);
@@ -70,7 +71,7 @@ void loop() {
       Serial.print('\t');
       Serial.print(targetPos);
       Serial.print('\t');
-      Serial.println(currentPos);
+      Serial.println(currentPos);//*/
     }
   }
 }
