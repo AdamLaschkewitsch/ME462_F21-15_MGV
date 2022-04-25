@@ -136,7 +136,7 @@ void loop() {
     ch7 = CH(7); //update ch7
     //*/
     currentPos = posCONTROL(currentPos);
-    // Serial.println(i);
+    Serial.println(currentPos);
 
   //}
 /*
