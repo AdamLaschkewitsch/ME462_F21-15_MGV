@@ -16,6 +16,7 @@ void PULSE(int PIN, float cycleWidth) {
   digitalWrite(PIN, LOW);
   delayMicroseconds(cycleWidth - pulseWidth);
 }//*/
+/*
 void PWM(int PIN, float dutyCycle) {
   onTime= dutyCycle*cycleWidth;
   offTime= cycleWidth - onTime;
@@ -27,13 +28,13 @@ void PWM(int PIN, float dutyCycle) {
   digitalWrite(PIN, LOW);
   delayMicroseconds(offTime);
   }
-
+//*/
 void setup() {
   // put your setup code here, to run once:
 pinMode(A1, INPUT);
 pinMode(3,OUTPUT);
-pinMode(5,OUTPUT);
-pinMode(6,OUTPUT);
+//pinMode(5,OUTPUT);
+//pinMode(6,OUTPUT);
 
 //Serial.begin(115200);
 //digitalWrite(3,HIGH);
@@ -49,9 +50,10 @@ void loop() {
   //PWM(3,dutyCycle);
  // Serial.println(PWM);
   //delay(20);
-  byte pot = map(POT(),0,255,1,254);
+  byte pot = POT();//map(POT(),0,255,128,254);
+  //Serial.println(pot);
   analogWrite(3,pot);
-  analogWrite(5,map(pot,0,255,255,0));
-  analogWrite(6,pot/2);
+  //analogWrite(5,map(pot,0,255,255,0));
+  //analogWrite(6,pot/2);
 delay(10);
 }

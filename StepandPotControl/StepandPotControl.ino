@@ -8,13 +8,13 @@
 #define rangeOfRev 1
 #define gearRatio 15.3
 #define maxGearboxRPM 25
-#define max_e 5
+#define max_e 30
 
-float maxCCW =  gearRatio * stepsPerRev * rangeOfRev / 2;
-float maxCW = - gearRatio * stepsPerRev * rangeOfRev / 2;
-float currentPos;
-float targetPos;
-float e;
+int maxCCW =  gearRatio * stepsPerRev * rangeOfRev / 2;
+int maxCW = - gearRatio * stepsPerRev * rangeOfRev / 2;
+int currentPos;
+int targetPos;
+int e;
 int maxPulseFreq = stepsPerRev * 10;
 int i;
 
@@ -46,7 +46,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  targetPos = mapfloat(analogRead(POT), 0, 1023, maxCW, maxCCW);
+  targetPos = map(analogRead(POT), 0, 1023, maxCW, maxCCW);
   e = targetPos - currentPos;
   if (abs(e) > max_e) {
     i = max_e / 2;
