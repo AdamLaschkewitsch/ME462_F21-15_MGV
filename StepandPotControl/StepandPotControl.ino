@@ -1,13 +1,13 @@
 //Stepper output info
 #define POT A0
 #define PUL 6
-#define DIR 8
+#define DIR 9
 
 #define pulseWidth 20  // microseconds
 #define stepsPerRev 200
 #define rangeOfRev 1
 #define gearRatio 15.3
-#define maxGearboxRPM 25
+#define maxGearboxRPM 15
 #define max_e 30
 
 int maxCCW =  gearRatio * stepsPerRev * rangeOfRev / 2;
@@ -40,12 +40,28 @@ void setup() {
   pinMode(POT, INPUT);
   pinMode(PUL, OUTPUT);
   pinMode(DIR, OUTPUT);
-  //Serial.begin(115200);
+  Serial.begin(115200);
   int currretPos = 0;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  int i = 0;
+  while(i<100){
+  PULSE(15,1);
+  i+=1;
+  //  Serial.println(i);
+  }
+  delay(1);
+
+  i=0;
+  while(i<100){
+  PULSE(15,0);
+  i+=1;
+
+   // Serial.println(i);
+}
+  /*
   targetPos = map(analogRead(POT), 0, 1023, maxCW, maxCCW);
   e = targetPos - currentPos;
   if (abs(e) > max_e) {
@@ -55,15 +71,21 @@ void loop() {
       if (e > max_e) {
         PULSE(maxGearboxRPM, 1);
         currentPos += 1;
+        Serial.print('+');
       }
 
       if (e < -max_e) {
         PULSE(maxGearboxRPM, 0);
         currentPos -= 1;
+        Serial.print('-');
+
       }
       i -= 1;
-      /*
-      Serial.print(maxCW);
+      //*
+
+    }
+  }
+        Serial.print(maxCW);
       Serial.print('\t');
       Serial.print(maxCCW);
       Serial.print('\t');
@@ -72,6 +94,4 @@ void loop() {
       Serial.print(targetPos);
       Serial.print('\t');
       Serial.println(currentPos);//*/
-    }
-  }
 }
