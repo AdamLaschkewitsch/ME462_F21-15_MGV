@@ -9,7 +9,7 @@
 #define stepsPerRev 200
 #define rangeOfRev .55
 #define gearRatio 15.3
-#define maxGearboxRPM 30
+#define maxGearboxRPM 20
 #define max_e 100
 
 int currentPos;
