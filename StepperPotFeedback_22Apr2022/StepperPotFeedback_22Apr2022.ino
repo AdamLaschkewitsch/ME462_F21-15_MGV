@@ -7,7 +7,7 @@
 
 #define pulseWidth 20  // microseconds
 #define stepsPerRev 200
-#define rangeOfRev .55
+#define rangeOfRev .9
 #define gearRatio 15.3
 #define maxGearboxRPM 20
 #define max_e 100
@@ -17,8 +17,8 @@ int targetPos;
 int e;
 int i;
 
-int maxCCW =  gearRatio * stepsPerRev * rangeOfRev / 2;
-int maxCW = - gearRatio * stepsPerRev * rangeOfRev / 2;
+int maxCCW =  gearRatio * stepsPerRev / 2;
+int maxCW = - gearRatio * stepsPerRev / 2;
 
 
 void PULSE(float RPM, int dir) {
@@ -47,7 +47,7 @@ void loop() {
   //*
   // put your main code here, to run repeatedly:
   //targetPos = map(analogRead(targetPOT), 0, 1023, maxCW, maxCCW); // use potentiometer for target position
-  targetPos = map(pulseIn(pwmINPUT,HIGH),1000,2000, maxCW, maxCCW); // use pwm from RC for target position
+  targetPos = rangeOfRev * map(pulseIn(pwmINPUT,HIGH),1000,2000, maxCW, maxCCW); // use pwm from RC for target position
   currentPos = map(analogRead(sensorPOT), 0, 1023, maxCW, maxCCW);
 
   e = targetPos - currentPos;
